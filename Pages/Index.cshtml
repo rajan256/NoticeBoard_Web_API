@@ -1,0 +1,308 @@
+﻿@page
+@{}
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Notice</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+</head>
+<body>
+
+    <div>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-secondary">
+            <a class="navbar-brand" href="#">Public Notice Board</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarText" aria-controls="navbarText" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarText">
+                <ul class="navbar-nav mr-auto">
+                    <li class="nav-item active">
+                        <button class="btn btn-outline-dark" data-toggle="modal" data-target="#addNotice">Add Notice</button>
+                    </li>
+                  
+                </ul>
+                
+            </div>
+        </nav>
+
+
+        <div class="container">
+           <div class="row" id="notices" >
+
+
+           </div>
+            
+        </div>
+    </div>
+
+
+
+
+
+
+
+    <script src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-2.0.3.min.js"></script>
+    <script src="https://ajax.aspnetcdn.com/ajax/jquery.templates/beta1/jquery.tmpl.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+    <script>
+        var uri = 'api/Notices';
+
+        $(document).ready(function () {
+            // Gets all Notices
+            $.getJSON(uri)
+                .done(function (data) {
+
+                    $("#noticeTemplate").tmpl(data).appendTo("#notices");
+                });
+        });
+
+
+
+        function getAllNotices() {
+
+               $.getJSON(uri)
+                   .done(function (data) {
+
+                       $("#notices").text("");
+
+                    $("#noticeTemplate").tmpl(data).appendTo("#notices");
+                });
+
+        }
+
+        function addNotice() {
+            var _title = $('#title').val();
+            var _description = $('#description').val();
+            var _publisher = $('#publisher').val();
+          
+           
+
+
+            var notice = {
+                title :  _title,
+               description :_description,
+               publisher:  _publisher 
+               
+           
+            };
+
+            $.ajax({
+                type: "POST",
+                url: uri,
+                data: JSON.stringify(notice),
+                contentType: "application/json; charset=utf-8"
+            }).done(function (response) {
+                $("#result").html("Notice Published!");
+                getAllNotices();
+            }).fail(function (jqXHR, textStatus) {
+                          $("#result").html("An error occured");
+               });
+
+
+
+
+        }
+
+
+
+
+
+        function updateNotice() {
+           var _title = $('#_title').val();
+            var _description = $('#_description').val();
+            var _publisher= $('#_publisher').val();
+         
+          
+
+
+            
+            var notice = {
+                id:  parseInt($('#_id').val()),
+                title :  _title,
+                description: _description,
+                publisher: _publisher, 
+              
+           
+            };
+
+            $.ajax({
+                type: "PUT",
+                url: uri+"/"+ $('#_id').val(),
+                data: JSON.stringify(notice),
+                contentType: "application/json; charset=utf-8"
+            }).done(function (response) {
+                $("#resultUpdate").html("Updated Notice");
+                getAllNotices();
+            }).fail(function (jqXHR, textStatus) {
+                          $("#resultUpdate").html("An error occured ");
+               });;
+
+
+
+
+        }
+
+
+
+        function remove(id) {
+
+
+          var yes =  confirm("Delete Notice?");
+
+            if (yes) {
+                $.ajax({
+                    type: "DELETE",
+                    url: uri + "/" + id,
+
+                }).done(function (response) {
+
+                    getAllNotices();
+                });
+
+            }
+
+
+        }
+
+
+         
+
+
+        function getNoticesForUpdate(id) {
+
+             $.ajax({
+                type: "GET",
+                url: uri+"/"+id,
+               contentType: "application/json"
+             }).done(function (response) {
+
+                  $('#_id').val(response.id);
+                 $('#_title').val(response.title) ;
+                 $('#_description').val(response.description);
+                 $('#_publisher').val(response.publisher);
+               
+
+              
+
+
+            });
+
+
+        }
+    </script>
+
+    
+
+    <script id="noticeTemplate" type="text/x-jquery-tmpl">
+       
+        <div class="card" style="width: 18rem;">
+            
+            <div class="card-body">
+                <u><h2 class="card-title">${title}</h2> </u>
+                <p class="card-text">${description}</p>
+                <h5 class="card-title">Published by: ${publisher}</h5>
+                <button class="btn btn-outline-dark" onclick="getNoticesForUpdate('${id}')" data-toggle="modal" data-target="#updateNotice">Edit</button>
+                <a href="#" class="btn btn-danger" onclick="remove('${id}')">Delete</a>
+            </div>
+        </div>
+    </script>
+
+
+
+    <div class="modal" tabindex="-1" role="dialog" id="addNotice">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Notice</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="form-group">
+                            <label for="name">Title</label>
+                            <input type="text" class="form-control" id="title" aria-describedby="emailHelp" placeholder="Title">
+
+                        </div>
+                        <div class="form-group">
+                            <label for="model">Description</label>
+                            <input type="text" class="form-control" id="description" aria-describedby="emailHelp" placeholder="Description">
+
+                        </div>
+                        <div class="form-group">
+                            <label for="model">Publisher</label>
+                            <input type="text" class="form-control" id="publisher" aria-describedby="emailHelp" placeholder="Publisher">
+
+                        </div>
+                     
+
+                        <div class="form-group" id="result">
+
+
+                        </div>
+                        <button type="button" onclick="addNotice()" class="btn btn-primary">Publish</button>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+
+    <div class="modal" tabindex="-1" role="dialog" id="updateNotice">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Update Notice</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form>
+
+                        <div class="form-group">
+
+                            <input type="hidden" class="form-control" id="_id" aria-describedby="emailHelp">
+
+                        </div>
+                        <div class="form-group">
+                            <label for="name">Title</label>
+                            <input type="text" class="form-control" id="_title" aria-describedby="emailHelp" placeholder="Title">
+
+                        </div>
+                        <div class="form-group">
+                            <label for="model">Description</label>
+                            <input type="text" class="form-control" id="_description" aria-describedby="emailHelp" placeholder="Description">
+
+                        </div>
+                        <div class="form-group">
+                            <label for="model">Publisher</label>
+                            <input type="text" class="form-control" id="_publisher" aria-describedby="emailHelp" placeholder="Publisher">
+
+                        </div>
+
+
+                        <div class="form-group" id="resultUpdate">
+
+
+                        </div>
+                        <button type="button" onclick="updateNotice()" class="btn btn-primary">Update Publication</button>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
